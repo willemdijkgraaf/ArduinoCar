@@ -1,6 +1,6 @@
 /*
   HC-SR04 with TaskScheduler
-  TRIG on D3, ECHO on D4 (as requested)
+  ECHO on D3, TRIG on D4 
   - Measures frequently (every 60 ms)
   - Reports to Serial every 500 ms
   - No delay() calls; cooperative scheduling
