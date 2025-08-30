@@ -20,7 +20,7 @@ void taskReportSerial();  // prints the latest value
 
 // Run measurement ~16.7 Hz; reporting ~2 Hz
 Task tMeasure(60, TASK_FOREVER, &taskMeasureEcho);
-Task tReport(500, TASK_FOREVER, &taskReportSerial);
+Task tReport(50, TASK_FOREVER, &taskReportSerial);
 
 // --------- State / Filtering ----------
 volatile unsigned long lastDurationUs = 0;  // last echo duration (μs)

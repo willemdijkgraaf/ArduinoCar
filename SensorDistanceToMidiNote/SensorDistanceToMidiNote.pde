@@ -20,9 +20,9 @@ Serial port;
 Receiver midiOut;
 
 final int MIDI_CHANNEL = 0;       // 0-15
-final int NOTE_MIN = 36;          // C2
-final int NOTE_MAX = 84;          // C6
-final float CM_NEAR = 10;         // nearest distance to consider
+final int NOTE_MIN = 23;          // 12
+final int NOTE_MAX = 96;          // C7
+final float CM_NEAR = 2;         // nearest distance to consider
 final float CM_FAR  = 100;        // farthest distance to consider
 
 int lastNote = -1;
@@ -39,7 +39,7 @@ void setup() {
   textSize(14);
 
   println("Available serial ports:");
-  println(Serial.list());
+  //println(Serial.list());
 
   // Open COM3 @ 9600 (adjust if needed)
   try {
@@ -52,13 +52,16 @@ void setup() {
 
   // Open default MIDI Receiver (usually the default synth or selected MIDI out)
   listMidiDevices();
-  try {
-    midiOut = MidiSystem.getReceiver();
+  //try {
+    midiOut = openMidiOutDevice(2);
     println("MIDI receiver opened: " + midiOut);
-  } catch (MidiUnavailableException e) {
-    println("No default MIDI receiver available: " + e.getMessage());
-  }
+  //} catch (MidiUnavailableException e) {
+  //  println("No default MIDI receiver available: " + e.getMessage());
+  //}
+  
+
 }
+
 
 void draw() {
   background(0);
@@ -70,6 +73,39 @@ void draw() {
   if (millis() - lastDataMs > SILENCE_TIMEOUT_MS && lastNote >= 0) {
     noteOff(lastNote, 0);
     lastNote = -1;
+  }
+}
+
+
+// Opens a MIDI Out device by index from listMidiDevices()
+// Returns the Receiver you can use to send Note On/Off, etc.
+Receiver openMidiOutDevice(int deviceIndex) {
+  try {
+    MidiDevice.Info[] infos = MidiSystem.getMidiDeviceInfo();
+    if (deviceIndex < 0 || deviceIndex >= infos.length) {
+      println("Invalid device index: " + deviceIndex);
+      return null;
+    }
+
+    MidiDevice device = MidiSystem.getMidiDevice(infos[deviceIndex]);
+
+    // Ensure the device can receive MIDI messages
+    if (device.getMaxReceivers() == 0) {
+      println("Device " + infos[deviceIndex].getName() + " is not a MIDI Out.");
+      return null;
+    }
+
+    // Open the device if not already open
+    if (!device.isOpen()) {
+      device.open();
+    }
+
+    println("Opened MIDI Out: " + infos[deviceIndex].getName());
+    return device.getReceiver();
+
+  } catch (MidiUnavailableException e) {
+    println("MIDI device unavailable: " + e.getMessage());
+    return null;
   }
 }
 
@@ -92,7 +128,7 @@ void serialEvent(Serial p) {
 
   // Velocity: nearer → louder
   int velocity = (int)map(cm, CM_NEAR, CM_FAR, 120, 30);
-  velocity = constrain(velocity, 1, 127);
+  velocity = constrain(velocity, 127, 60);
 
   // If the note changed, send Note Off for the previous, then Note On for new
   if (note != lastNote) {
@@ -144,7 +180,7 @@ void stop() {
   if (lastNote >= 0) noteOff(lastNote, 0);
 
   if (midiOut != null) {
-    // Many Receivers don’t need explicit close, but do it if supported
+    // Many Receivers don't need explicit close, but do it if supported
     try {
       MidiDevice dev = (MidiDevice) ((Receiver) midiOut).getClass()
                          .getDeclaredField("this$0").get(midiOut);
