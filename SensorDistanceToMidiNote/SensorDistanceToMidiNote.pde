@@ -175,6 +175,66 @@ void noteOff(int note, int velocity) {
   }
 }
 
+//// --- Single note (unchanged) ---
+//void noteOn(int note, int velocity) {
+//  if (midiOut == null) return;
+//  try {
+//    ShortMessage msg = new ShortMessage();
+//    msg.setMessage(ShortMessage.NOTE_ON, MIDI_CHANNEL, clamp(note, 0, 127), clamp(velocity, 0, 127));
+//    midiOut.send(msg, -1);
+//  } catch (Exception e) {
+//    println("noteOn error: " + e.getMessage());
+//  }
+//}
+
+//void noteOff(int note, int velocity) {
+//  if (midiOut == null) return;
+//  try {
+//    ShortMessage msg = new ShortMessage();
+//    msg.setMessage(ShortMessage.NOTE_OFF, MIDI_CHANNEL, clamp(note, 0, 127), clamp(velocity, 0, 127));
+//    midiOut.send(msg, -1);
+//  } catch (Exception e) {
+//    println("noteOff error: " + e.getMessage());
+//  }
+//}
+
+// --- Chords: same velocity for all notes ---
+void noteOn(int[] notes, int velocity) {
+  if (midiOut == null || notes == null) return;
+  for (int n : notes) {
+    noteOn(n, velocity);
+  }
+}
+
+void noteOff(int[] notes, int velocity) {
+  if (midiOut == null || notes == null) return;
+  for (int n : notes) {
+    noteOff(n, velocity);
+  }
+}
+
+//// --- Chords: per-note velocities (parallel array) ---
+//void noteOn(int[] notes, int[] velocities) {
+//  if (midiOut == null || notes == null || velocities == null) return;
+//  int len = min(notes.length, velocities.length);
+//  for (int i = 0; i < len; i++) {
+//    noteOn(notes[i], velocities[i]);
+//  }
+//}
+
+//void noteOff(int[] notes, int[] velocities) {
+//  if (midiOut == null || notes == null || velocities == null) return;
+//  int len = min(notes.length, velocities.length);
+//  for (int i = 0; i < len; i++) {
+//    noteOff(notes[i], velocities[i]);
+//  }
+//}
+
+// --- Helper ---
+int clamp(int v, int lo, int hi) { 
+  return max(lo, min(hi, v)); 
+}
+
 void stop() {
   // Turn off any lingering note on exit
   if (lastNote >= 0) noteOff(lastNote, 0);
