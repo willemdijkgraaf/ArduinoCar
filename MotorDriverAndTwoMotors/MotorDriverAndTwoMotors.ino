@@ -7,8 +7,9 @@ const uint8_t ENB = 5;  // Left motor enable (PWM)
 const uint8_t IN3 = 7;   // Left motor dir A
 const uint8_t IN4 = 6;   // Left motor dir B
 
-uint8_t speed = 255;
+uint8_t speed = 120;
 bool shallDriveForward = true;
+int8_t direction = -40; // 0 = straight forward, -127 = spin left, +127 = spin right, -1..-126 = turn left, 1 ..126 turn right
 
 void setup() {
   // Set all pins as outputs
@@ -22,8 +23,8 @@ void setup() {
 
 void loop() {
   // Nothing needed here, keeps running forward
-  analogWrite(ENA, speed); // full speed left motor
-  analogWrite(ENB, speed); // full speed right motor
+  analogWrite(ENA, speed - direction); // full speed left motor
+  analogWrite(ENB, speed + direction); // full speed right motor
 
   // Drive both motors forward at full speed
 
