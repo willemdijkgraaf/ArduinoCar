@@ -8,6 +8,7 @@ const uint8_t IN3 = 7;   // Left motor dir A
 const uint8_t IN4 = 6;   // Left motor dir B
 
 uint8_t speed = 255;
+bool shallDriveForward = true;
 
 void setup() {
   // Set all pins as outputs
@@ -25,9 +26,10 @@ void loop() {
   analogWrite(ENB, speed); // full speed right motor
 
   // Drive both motors forward at full speed
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+
+  digitalWrite(IN1, !shallDriveForward);
+  digitalWrite(IN2, shallDriveForward);
+  digitalWrite(IN3, shallDriveForward);
+  digitalWrite(IN4, !shallDriveForward);
 
 }
