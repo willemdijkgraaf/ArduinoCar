@@ -29,14 +29,14 @@ const unsigned long ECHO_TIMEOUT_US = 30000UL;
 // --------- Scheduler & Tasks ----------
 Scheduler runner;
 void taskMeasureDistance();   // takes a measurement
-void taskReportState();  // prints the latest value
+// void taskReportState();  // prints the latest value
 void taskChangeSpeed(); // changes speed and forward/backwards direction
 void taskMoveLeftRight();
 void taskMoveUpDown();
 // Create tasks: (interval in milliseconds, iterations, callback)
 Task tMeasureDistance(20, TASK_FOREVER, &taskMeasureDistance);
-Task tReportState(1000, TASK_FOREVER, &taskReportState);
-Task tChangeSpeed(20, TASK_FOREVER, &taskChangeSpeed);
+// Task tReportState(1000, TASK_FOREVER, &taskReportState);
+Task tChangeSpeed(40, TASK_FOREVER, &taskChangeSpeed);
 Task tMoveLeftRight(50, TASK_FOREVER, &taskMoveLeftRight);
 Task tMoveUpDown(60, TASK_FOREVER, &taskMoveUpDown);
 
@@ -53,7 +53,7 @@ int stepUD  = 2;
 // ------ Influence speed & direction ---------
 uint8_t speed = 255;
 bool shallDriveForward = true;
-int8_t direction = 0; // 0 = straight forward, -127 = spin left, +127 = spin right, -1..-126 = turn left, 1 ..126 turn right
+int direction = 0; // 0 = straight forward, -127 = spin left, +127 = spin right, -1..-126 = turn left, 1 ..126 turn right
 
 void setup() {
   setupMotorDriver();
@@ -62,7 +62,7 @@ void setup() {
   setupTaskScheduler();
 
   // Setup serial port (USB/RS232 out)
-  Serial.begin(9600);
+  //Serial.begin(9600);
 }
 
 void loop() {
@@ -98,7 +98,7 @@ void setupTaskScheduler() {
   runner.init();
   
   runner.addTask(tMeasureDistance);
-  runner.addTask(tReportState);
+  // runner.addTask(tReportState);
   runner.addTask(tChangeSpeed);
   runner.addTask(tMoveLeftRight);
   runner.addTask(tMoveUpDown);
@@ -106,7 +106,7 @@ void setupTaskScheduler() {
   tMoveLeftRight.enable();
   tMoveUpDown.enable();
   tMeasureDistance.enable();
-  tReportState.enable();
+  // tReportState.enable();
   tChangeSpeed.enable();
 }
 
@@ -129,11 +129,11 @@ void taskMoveUpDown() {
 }
 
 void taskChangeSpeed() {
-  int speedMotorA = speed - direction;
-  int speedMotorB = speed + direction;
+  int speedMotorA = speed; //- direction;
+  int speedMotorB = speed; //+ direction;
   shallDriveForward = true;
   // something on our path?
-  if (filteredCm < 20 && filteredCm > 5){
+  if (filteredCm > 50 || filteredCm < 20){
     speedMotorA = 0;
     speedMotorB = 0;
   }
@@ -143,14 +143,14 @@ void taskChangeSpeed() {
     speedMotorB = 255;
     shallDriveForward = false;
   }
-  // change speed of motors
-  analogWrite(ENA, speedMotorA); // full speed left motor
-  analogWrite(ENB, speedMotorB); // full speed right motor
-  // drive forward or backward
+  
   digitalWrite(IN1, !shallDriveForward);
   digitalWrite(IN2, shallDriveForward);
+  analogWrite(ENA, speedMotorA); // full speed left motor
+  
   digitalWrite(IN3, shallDriveForward);
   digitalWrite(IN4, !shallDriveForward);
+  analogWrite(ENB, speedMotorB); // full speed right motor
 }
 
 void taskMeasureDistance() {
