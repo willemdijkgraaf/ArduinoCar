@@ -25,12 +25,12 @@ const unsigned long ECHO_TIMEOUT_US = 30000UL;
 Scheduler runner;
 
 void taskMeasureDistance();   // takes a measurement
-void taskReportSerial();  // prints the latest value
+void taskReportState();  // prints the latest value
 void taskChangeSpeed(); // changes speed and forward/backwards direction
 
 // Run measurement ~16.7 Hz; reporting ~2 Hz
 Task tMeasureDistance(20, TASK_FOREVER, &taskMeasureDistance);
-Task tReportSerial(50, TASK_FOREVER, &taskReportSerial);
+Task tReportState(50, TASK_FOREVER, &taskReportState);
 Task tChangeSpeed(20, TASK_FOREVER, &taskChangeSpeed);
 
 uint8_t speed = 255;
@@ -38,38 +38,44 @@ bool shallDriveForward = true;
 int8_t direction = 0; // 0 = straight forward, -127 = spin left, +127 = spin right, -1..-126 = turn left, 1 ..126 turn right
 
 void setup() {
-  // Setup motor related pins
-  pinMode(ENA, OUTPUT);
-  pinMode(ENB, OUTPUT);
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  pinMode(IN3, OUTPUT);
-  pinMode(IN4, OUTPUT);
-  // Setup distance sensor related pins
-  pinMode(TRIG_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
-  digitalWrite(TRIG_PIN, LOW);
-
-  // Setup task scheduler
-  runner.init();
-  runner.addTask(tMeasureDistance);
-  runner.addTask(tReportSerial);
-  runner.addTask(tChangeSpeed);
-  tMeasureDistance.enable();
-  tReportSerial.enable();
-  tChangeSpeed.enable();
+  setupMotorDriver();
+  setupDistanceSensor();
+  setupTaskScheduler();
 
   // Setup serial port (USB/RS232 out)
   Serial.begin(9600);
-  Serial.println(F("TaskScheduler started."));
 }
 
 void loop() {
   runner.execute();
 }
 
-void taskChangeSpeed() {
+void setupMotorDriver() {
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+}
 
+void setupDistanceSensor() {
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  digitalWrite(TRIG_PIN, LOW);
+}
+
+void setupTaskScheduler() {
+  runner.init();
+  runner.addTask(tMeasureDistance);
+  runner.addTask(tReportState);
+  runner.addTask(tChangeSpeed);
+  tMeasureDistance.enable();
+  tReportState.enable();
+  tChangeSpeed.enable();
+}
+
+void taskChangeSpeed() {
   int speedMotorA = speed - direction;
   int speedMotorB = speed + direction;
   shallDriveForward = true;
@@ -125,7 +131,7 @@ void taskMeasureDistance() {
   }
 }
 
-void taskReportSerial() {
+void taskReportState() {
   Serial.print(F("Raw: "));
   if (isnan(lastDistanceCm)) {
     Serial.print(F("—"));
