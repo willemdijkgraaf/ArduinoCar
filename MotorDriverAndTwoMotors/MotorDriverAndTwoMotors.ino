@@ -33,22 +33,22 @@ void taskReportState();  // prints the latest value
 void taskChangeSpeed(); // changes speed and forward/backwards direction
 void taskMoveLeftRight();
 void taskMoveUpDown();
+// Create tasks: (interval in milliseconds, iterations, callback)
 Task tMeasureDistance(20, TASK_FOREVER, &taskMeasureDistance);
-Task tReportState(50, TASK_FOREVER, &taskReportState);
+Task tReportState(1000, TASK_FOREVER, &taskReportState);
 Task tChangeSpeed(20, TASK_FOREVER, &taskChangeSpeed);
-// Create tasks: (interval, iterations, callback)
-Task tMoveLeftRight(100, TASK_FOREVER, &taskMoveLeftRight);
-Task tMoveUpDown(100, TASK_FOREVER, &taskMoveUpDown);
+Task tMoveLeftRight(50, TASK_FOREVER, &taskMoveLeftRight);
+Task tMoveUpDown(60, TASK_FOREVER, &taskMoveUpDown);
 
 // Servo objects
 Servo servoLeftRight;
 Servo servoUpDown;
 
 // Servo movement variables
-int angleLR = 135;
-int stepLR  = 3;
-int angleUD = 135;
-int stepUD  = 3;
+int angleLR = 120;
+int stepLR  = 4;
+int angleUD = 100;
+int stepUD  = 2;
 
 // ------ Influence speed & direction ---------
 uint8_t speed = 255;
@@ -113,7 +113,7 @@ void setupTaskScheduler() {
 // Task function for left-right servo
 void taskMoveLeftRight() {
   angleLR += stepLR;
-  if (angleLR >= 180 || angleLR <= 90) {
+  if (angleLR >= 170 || angleLR <= 70) {
     stepLR = -stepLR; // reverse direction
   }
   servoLeftRight.write(angleLR);
@@ -122,7 +122,7 @@ void taskMoveLeftRight() {
 // Task function for up-down servo
 void taskMoveUpDown() {
   angleUD += stepUD;
-  if (angleUD >= 180 || angleUD <= 90) {
+  if (angleUD >= 140 || angleUD <= 90) {
     stepUD = -stepUD; // reverse direction
   }
   servoUpDown.write(angleUD);
