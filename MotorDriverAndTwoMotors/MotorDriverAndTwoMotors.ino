@@ -26,69 +26,73 @@ Scheduler runner;
 
 void taskMeasureDistance();   // takes a measurement
 void taskReportSerial();  // prints the latest value
+void taskChangeSpeed(); // changes speed and forward/backwards direction
 
-// Run measurement ~16.7 Hz; reporting ~2 Hz
-Task tMeasure(60, TASK_FOREVER, &taskMeasureDistance);
-Task tReport(50, TASK_FOREVER, &taskReportSerial);
+// Run measurement ~16.7 Hz; reporting ~1 Hz
+Task tMeasure(20, TASK_FOREVER, &taskMeasureDistance);
+Task tReport(1, TASK_FOREVER, &taskReportSerial);
+Task tChangeSpeed(20, TASK_FOREVER, &taskChangeSpeed);
 
 uint8_t speed = 255;
 bool shallDriveForward = true;
 int8_t direction = 0; // 0 = straight forward, -127 = spin left, +127 = spin right, -1..-126 = turn left, 1 ..126 turn right
 
 void setup() {
-  // Set all pins as outputs
+  // Setup motor related pins
   pinMode(ENA, OUTPUT);
   pinMode(ENB, OUTPUT);
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
-
-  Serial.begin(9600);
-
+  // Setup distance sensor related pins
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
-
   digitalWrite(TRIG_PIN, LOW);
 
+  // Setup task scheduler
   runner.init();
   runner.addTask(tMeasure);
   runner.addTask(tReport);
-
+  runner.addTask(tChangeSpeed);
   tMeasure.enable();
   tReport.enable();
+  tChangeSpeed.enable();
 
-  Serial.println(F("HC-SR04 with TaskScheduler started."));
+  // Setup serial port (USB/RS232 out)
+  Serial.begin(9600);
+  Serial.println(F("TaskScheduler started."));
 }
 
 void loop() {
   runner.execute();
+}
 
-  // Nothing needed here, keeps running forward
+void taskChangeSpeed() {
+
   int speedMotorA = speed - direction;
   int speedMotorB = speed + direction;
   shallDriveForward = true;
+  // something on our path?
   if (filteredCm < 20 && filteredCm > 5){
     speedMotorA = 0;
     speedMotorB = 0;
   }
+  // something right in fron of us? If yes, drive backwards at max speed
   if (filteredCm <= 5) {
-    speedMotorA = 250;
-    speedMotorB = 250;
+    speedMotorA = 255;
+    speedMotorB = 255;
     shallDriveForward = false;
   }
+  // change speed of motors
   analogWrite(ENA, speedMotorA); // full speed left motor
   analogWrite(ENB, speedMotorB); // full speed right motor
-
-  // Drive both motors forward at full speed
-
+  // drive forward or backward
   digitalWrite(IN1, !shallDriveForward);
   digitalWrite(IN2, shallDriveForward);
   digitalWrite(IN3, shallDriveForward);
   digitalWrite(IN4, !shallDriveForward);
-
 }
-
 
 void taskMeasureDistance() {
   // Trigger a 10 μs pulse
