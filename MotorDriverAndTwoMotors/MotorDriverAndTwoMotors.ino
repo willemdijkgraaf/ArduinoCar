@@ -1,16 +1,21 @@
 #include <TaskScheduler.h>
+#include <Servo.h>
 
 // --------- Pins ----------
+// distance sensor
 const uint8_t ECHO_PIN = 3;
 const uint8_t TRIG_PIN = 4;
-
+// motor right
 const uint8_t ENA = 10;   // Right motor enable (PWM)
 const uint8_t IN1 = 9;   // Right motor dir A
 const uint8_t IN2 = 8;   // Right motor dir B
-
+// motor left
 const uint8_t ENB = 5;  // Left motor enable (PWM)
 const uint8_t IN3 = 7;   // Left motor dir A
 const uint8_t IN4 = 6;   // Left motor dir B
+// servos
+const uint8_t SERVO_LEFTRIGHT = 11;
+const uint8_t SERVO_UPDOWN = 12;
 
 // --------- State / Filtering ----------
 volatile unsigned long lastDurationUs = 0;  // last echo duration (μs)
@@ -23,22 +28,36 @@ const unsigned long ECHO_TIMEOUT_US = 30000UL;
 
 // --------- Scheduler & Tasks ----------
 Scheduler runner;
-
 void taskMeasureDistance();   // takes a measurement
 void taskReportState();  // prints the latest value
 void taskChangeSpeed(); // changes speed and forward/backwards direction
-
-// Run measurement ~16.7 Hz; reporting ~2 Hz
+void taskMoveLeftRight();
+void taskMoveUpDown();
 Task tMeasureDistance(20, TASK_FOREVER, &taskMeasureDistance);
 Task tReportState(50, TASK_FOREVER, &taskReportState);
 Task tChangeSpeed(20, TASK_FOREVER, &taskChangeSpeed);
+// Create tasks: (interval, iterations, callback)
+Task tMoveLeftRight(100, TASK_FOREVER, &taskMoveLeftRight);
+Task tMoveUpDown(100, TASK_FOREVER, &taskMoveUpDown);
 
+// Servo objects
+Servo servoLeftRight;
+Servo servoUpDown;
+
+// Servo movement variables
+int angleLR = 135;
+int stepLR  = 3;
+int angleUD = 135;
+int stepUD  = 3;
+
+// ------ Influence speed & direction ---------
 uint8_t speed = 255;
 bool shallDriveForward = true;
 int8_t direction = 0; // 0 = straight forward, -127 = spin left, +127 = spin right, -1..-126 = turn left, 1 ..126 turn right
 
 void setup() {
   setupMotorDriver();
+  setupServos();
   setupDistanceSensor();
   setupTaskScheduler();
 
@@ -48,6 +67,16 @@ void setup() {
 
 void loop() {
   runner.execute();
+}
+
+void setupServos(){
+  // Attach servos
+  servoLeftRight.attach(SERVO_LEFTRIGHT);
+  servoUpDown.attach(SERVO_UPDOWN);
+
+  // Initial positions
+  servoLeftRight.write(angleLR);
+  servoUpDown.write(angleUD);
 }
 
 void setupMotorDriver() {
@@ -60,19 +89,43 @@ void setupMotorDriver() {
 }
 
 void setupDistanceSensor() {
-  pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
+  pinMode(TRIG_PIN, OUTPUT);
   digitalWrite(TRIG_PIN, LOW);
 }
 
 void setupTaskScheduler() {
   runner.init();
+  
   runner.addTask(tMeasureDistance);
   runner.addTask(tReportState);
   runner.addTask(tChangeSpeed);
+  runner.addTask(tMoveLeftRight);
+  runner.addTask(tMoveUpDown);
+
+  tMoveLeftRight.enable();
+  tMoveUpDown.enable();
   tMeasureDistance.enable();
   tReportState.enable();
   tChangeSpeed.enable();
+}
+
+// Task function for left-right servo
+void taskMoveLeftRight() {
+  angleLR += stepLR;
+  if (angleLR >= 180 || angleLR <= 90) {
+    stepLR = -stepLR; // reverse direction
+  }
+  servoLeftRight.write(angleLR);
+}
+
+// Task function for up-down servo
+void taskMoveUpDown() {
+  angleUD += stepUD;
+  if (angleUD >= 180 || angleUD <= 90) {
+    stepUD = -stepUD; // reverse direction
+  }
+  servoUpDown.write(angleUD);
 }
 
 void taskChangeSpeed() {
