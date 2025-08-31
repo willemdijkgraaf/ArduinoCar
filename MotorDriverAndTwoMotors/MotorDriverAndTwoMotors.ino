@@ -28,9 +28,9 @@ void taskMeasureDistance();   // takes a measurement
 void taskReportSerial();  // prints the latest value
 void taskChangeSpeed(); // changes speed and forward/backwards direction
 
-// Run measurement ~16.7 Hz; reporting ~1 Hz
-Task tMeasure(20, TASK_FOREVER, &taskMeasureDistance);
-Task tReport(1, TASK_FOREVER, &taskReportSerial);
+// Run measurement ~16.7 Hz; reporting ~2 Hz
+Task tMeasureDistance(20, TASK_FOREVER, &taskMeasureDistance);
+Task tReportSerial(50, TASK_FOREVER, &taskReportSerial);
 Task tChangeSpeed(20, TASK_FOREVER, &taskChangeSpeed);
 
 uint8_t speed = 255;
@@ -52,11 +52,11 @@ void setup() {
 
   // Setup task scheduler
   runner.init();
-  runner.addTask(tMeasure);
-  runner.addTask(tReport);
+  runner.addTask(tMeasureDistance);
+  runner.addTask(tReportSerial);
   runner.addTask(tChangeSpeed);
-  tMeasure.enable();
-  tReport.enable();
+  tMeasureDistance.enable();
+  tReportSerial.enable();
   tChangeSpeed.enable();
 
   // Setup serial port (USB/RS232 out)
