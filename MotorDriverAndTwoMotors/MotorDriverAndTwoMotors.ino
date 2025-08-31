@@ -24,11 +24,11 @@ const unsigned long ECHO_TIMEOUT_US = 30000UL;
 // --------- Scheduler & Tasks ----------
 Scheduler runner;
 
-void taskMeasureEcho();   // takes a measurement
+void taskMeasureDistance();   // takes a measurement
 void taskReportSerial();  // prints the latest value
 
 // Run measurement ~16.7 Hz; reporting ~2 Hz
-Task tMeasure(60, TASK_FOREVER, &taskMeasureEcho);
+Task tMeasure(60, TASK_FOREVER, &taskMeasureDistance);
 Task tReport(50, TASK_FOREVER, &taskReportSerial);
 
 uint8_t speed = 255;
@@ -90,7 +90,7 @@ void loop() {
 }
 
 
-void taskMeasureEcho() {
+void taskMeasureDistance() {
   // Trigger a 10 μs pulse
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
